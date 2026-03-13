@@ -22,3 +22,4 @@ ports:
   containerPort: 8000
 
 replicaCount: 2
+label: "prd"

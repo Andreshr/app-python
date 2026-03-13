@@ -21,3 +21,4 @@ ports:
   containerPort: 8000
 
 replicaCount: 1
+label: "dev"
