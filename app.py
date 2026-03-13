@@ -14,3 +14,4 @@ def read_root():
         "db_password": db_password,
         "api_key": api_key
     }
+
