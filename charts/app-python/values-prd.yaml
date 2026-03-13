@@ -1,6 +1,6 @@
 image:
   repository: andresfhr/app-python
-  tag: "8b71c0b212aacf00239e32865e4ebb9e14e92d3e"
+  tag: "latest"
 
 
 imagePullSecrets:
