@@ -1,0 +1,24 @@
+name: cd-dev
+
+on:
+  push:
+    branches: [ develop ]
+permissions:
+  contents: write
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Update Helm values-dev.yaml and Push to GitHub
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+        
+        sed -i 's/tag: .*/tag: "${{ github.sha }}"/' charts/app-python/values-dev.yaml
+ 
+        git add charts/app-python/values-dev.yaml
+        git commit -m "CD: Update image tag to ${{ github.sha }} [skip ci]"
+        
+        git push -u origin develop
