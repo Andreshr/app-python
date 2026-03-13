@@ -27,9 +27,8 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         
-    # MODIFICADO: Construir y subir asegurando nombre de usuario en minúsculas
+    # MODIFICADO: Construir y subir con tu nombre de usuario
     - name: Build and push Docker image
       run: |
-        DOCKER_USER=$(echo "${{ secrets.DOCKER_USERNAME }}" | tr '[:upper:]' '[:lower:]')
-        docker build -t $DOCKER_USER/app-python:latest .
-        docker push $DOCKER_USER/app-python:latest
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/app-python:${{ github.sha }} .
+        docker push ${{ secrets.DOCKER_USERNAME }}/app-python:${{ github.sha }}
