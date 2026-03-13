@@ -2,6 +2,9 @@ image:
   repository: andreshr/app-python
   tag: "latest"
 
+imagePullSecrets:
+  - name: dockerhub-secret
+
 resources:
   limits:
     cpu: 100m

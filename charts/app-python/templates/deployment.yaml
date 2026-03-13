@@ -12,6 +12,10 @@ spec:
       labels:
         app: app-python
     spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       containers:
         - name: app-python
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
