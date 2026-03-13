@@ -1,6 +1,6 @@
 image:
   repository: andreshr/app-python
-  tag: "latest"
+  tag: "02cd14320130b8dceb483de823d66649087304cb"
 
 resources:
   limits:
