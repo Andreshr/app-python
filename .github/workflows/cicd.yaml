@@ -38,10 +38,10 @@ jobs:
       run: |
         git config --global user.name "GitHub Actions Bot"
         git config --global user.email "actions@github.com"
-        
+        git checkout develop 
         sed -i 's/tag: .*/tag: "${{ github.sha }}"/' charts/app-python/values-prd.yaml
-        
+   
         git add charts/app-python/values-prd.yaml
         git commit -m "CD: Update image tag to ${{ github.sha }} [skip ci]"
         
-        git push
+        git push -u origin develop
