@@ -1,0 +1,23 @@
+image:
+  repository: andresfhr/app-python
+  tag: "08ebe6e2debede3f72e2d3a5f2348c71a5324408"
+
+imagePullSecrets:
+  - name: dockerhub-secret
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+service:
+  type: ClusterIP
+
+ports:
+  port: 80
+  containerPort: 8000
+
+replicaCount: 1
