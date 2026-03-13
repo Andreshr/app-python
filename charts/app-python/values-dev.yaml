@@ -1,6 +1,6 @@
 image:
   repository: andresfhr/app-python
-  tag: "798395412e943f5874c147e21691b22014f6dc63"
+  tag: "d9c9b8b30145740e85fab04923b1f011ccaf6dd7"
 
 imagePullSecrets:
   - name: dockerhub-secret
