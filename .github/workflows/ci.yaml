@@ -36,13 +36,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff
+          pip install -r requirements-dev.txt
 
       - name: Lint (ruff)
         run: ruff check .
 
       - name: Tests + coverage gate
-        run: pytest --cov=. --cov-fail-under=80
+        run: pytest --cov=app --cov-fail-under=80
 
   dependency_review:
     name: Dependency review (PR gate)
