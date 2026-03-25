@@ -58,12 +58,10 @@ jobs:
 
   build_and_push:
     name: Build & Push image (post-merge)
-    # Solo post-merge (push) y si quality pasó
     if: ${{ github.event_name == 'push' }}
     needs: [ quality ]
     runs-on: ubuntu-latest
 
-    # Aquí sí necesitas autenticación al registry; mantén permisos mínimos igualmente [1](https://docs.github.com/en/actions/reference/security/secure-use)
     permissions:
       contents: read
 
@@ -91,7 +89,7 @@ jobs:
 
       # Scan de imagen. Trivy action permite fallar el pipeline por severidad. [3](https://github.com/aquasecurity/trivy-action)
       - name: Trivy image scan (HIGH/CRITICAL gate)
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: "${{ secrets.DOCKER_USERNAME }}/app-python:${{ github.sha }}"
           format: "table"
