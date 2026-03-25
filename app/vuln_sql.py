@@ -1,11 +1,15 @@
+from fastapi import FastAPI
 import sqlite3
 
-def get_user(username: str):
+app = FastAPI()
+
+@app.get("/user")
+def get_user(name: str):
     conn = sqlite3.connect(":memory:")
     cursor = conn.cursor()
 
-    # ❌ VULNERABLE: SQL construido con input del usuario
-    query = f"SELECT * FROM users WHERE name = '{username}'"
+    # ❌ VULNERABLE: input HTTP → SQL sin sanitizar
+    query = f"SELECT * FROM users WHERE name = '{name}'"
     cursor.execute(query)
 
-    return cursor.fetchall()
+    return {"ok": True}
