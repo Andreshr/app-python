@@ -1,0 +1,32 @@
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [ develop, main ]
+  push:
+    branches: [ develop, main ]
+  schedule:
+    - cron: "0 8 * * 4"
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["python"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
