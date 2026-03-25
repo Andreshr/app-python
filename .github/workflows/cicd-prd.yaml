@@ -1,24 +1,42 @@
-name: cd-prd
+name: CD Prod (GitOps update values-prd)
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["CI (quality + security + build)"]
+    types: [completed]
+    branches: [main]
+
 permissions:
   contents: write
+
+concurrency:
+  group: cd-prd
+  cancel-in-progress: false
+
 jobs:
   deploy-prd:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
 
-    - name: Update Helm values-prd.yaml and Push to GitHub
-      run: |
-        git config --global user.name "GitHub Actions Bot"
-        git config --global user.email "actions@github.com"
-         
-        sed -i 's/tag: .*/tag: "${{ github.sha }}"/' charts/app-python/values-prd.yaml
- 
-        git add charts/app-python/values-prd.yaml
-        git commit -m "CD: Update image tag to ${{ github.sha }} [skip ci]"
-        
-        git push -u origin main
+    # Esto activa “Environment protection” si lo configuras en Settings → Environments
+    # (aprobadores, wait timers, etc). Es el gate típico de producción.
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update values-prd.yaml with image tag and push
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          sed -i "s/tag: .*/tag: \"${SHA}\"/" charts/app-python/values-prd.yaml
+
+          git add charts/app-python/values-prd.yaml
+          git commit -m "CD(prd): update image tag to ${SHA} [skip ci]" || exit 0
+          git push origin main

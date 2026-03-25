@@ -1,16 +1,71 @@
-name: CI Build
+name: CI (quality + security + build)
+
 
 on:
+  pull_request:
+    branches: [ develop, main ]
   push:
-    branches:
-      - '**'
+    branches: [ develop, main ]
+    paths-ignore:
+      - "charts/app-python/values-dev.yaml"
+      - "charts/app-python/values-prd.yaml"
+
 
 permissions:
   contents: read
 
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+
 jobs:
-  build:
+  quality:
+    name: Quality gate (lint + tests + coverage)
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Tests + coverage gate
+        run: pytest --cov=. --cov-fail-under=80
+
+  dependency_review:
+    name: Dependency review (PR gate)
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+
+  build_and_push:
+    name: Build & Push image (post-merge)
+    # Solo post-merge (push) y si quality pasó
+    if: ${{ github.event_name == 'push' }}
+    needs: [ quality ]
+    runs-on: ubuntu-latest
+
+    # Aquí sí necesitas autenticación al registry; mantén permisos mínimos igualmente [1](https://docs.github.com/en/actions/reference/security/secure-use)
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,7 +75,26 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/app-python:${{ github.sha }} .
-          docker push ${{ secrets.DOCKER_USERNAME }}/app-python:${{ github.sha }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build & push con provenance/SBOM (supply chain). Docker build-push-action soporta esto. [4](https://docs.docker.com/build/ci/github-actions/attestations/)
+      - name: Build and push (SHA tag)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/app-python:${{ github.sha }}
+          provenance: mode=max
+          sbom: true
+
+      # Scan de imagen. Trivy action permite fallar el pipeline por severidad. [3](https://github.com/aquasecurity/trivy-action)
+      - name: Trivy image scan (HIGH/CRITICAL gate)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: "${{ secrets.DOCKER_USERNAME }}/app-python:${{ github.sha }}"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"

@@ -1,24 +1,36 @@
-name: cd-dev
+name: CD Dev (GitOps update values-dev)
 
 on:
-  push:
-    branches: [ develop ]
+  workflow_run:
+    workflows: ["CI (quality + security + build)"]
+    types: [completed]
+    branches: [develop]
+
 permissions:
   contents: write
+
+concurrency:
+  group: cd-dev
+  cancel-in-progress: true
+
 jobs:
   deploy-dev:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
 
-    - name: Update Helm values-dev.yaml and Push to GitHub
-      run: |
-        git config --global user.name "GitHub Actions Bot"
-        git config --global user.email "actions@github.com"
-        
-        sed -i 's/tag: .*/tag: "${{ github.sha }}"/' charts/app-python/values-dev.yaml
- 
-        git add charts/app-python/values-dev.yaml
-        git commit -m "CD: Update image tag to ${{ github.sha }} [skip ci]"
-        
-        git push -u origin develop
+      - name: Update values-dev.yaml with image tag and push
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          sed -i "s/tag: .*/tag: \"${SHA}\"/" charts/app-python/values-dev.yaml
+
+          git add charts/app-python/values-dev.yaml
+          git commit -m "CD(dev): update image tag to ${SHA} [skip ci]" || exit 0
+          git push origin develop
